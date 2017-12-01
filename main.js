@@ -9,6 +9,18 @@ const BrowserWindow = electron.BrowserWindow
 const path = require('path')
 const url = require('url')
 
+// Hackathon
+const crashReporter = electron.crashReporter
+const globalShortcut = electron.globalShortcut
+
+// Set up crash reporter
+crashReporter.start({
+  productName: 'Electron-ServiceDesk',
+  companyName: 'Hackathon-Rocks',
+  submitURL: "https://eae.sp.backtrace.io:6098/post?format=minidump&token=4ce974310113c1ec49c289029fd14592de9e3393ca1fb8e93e85d58bdc3e13ca",
+  uploadToServer: true
+})
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -47,6 +59,13 @@ function createWindow() {
     let data = dataStore.get(arg.key);
     event.returnValue = data;
   });
+  
+  // Hackathon. Use a global shortcut to send an event to Capture screenshot
+  globalShortcut.register('Ctrl+Alt+C', _ => {
+    console.log('Received keyboard shortcut!')
+
+    mainWindow.webContents.send('captureScreenEvent', app.getPath('pictures'))
+  })  
 }
 
 // This method will be called when Electron has finished
@@ -73,3 +92,9 @@ app.on('activate', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+// Hackathon. Inject a process crash to verify crash reporting
+ipcMain.on('injectCrashEvent', _ => {
+  console.log('Crashing!')
+  process.crash();
+})
