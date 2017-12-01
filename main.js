@@ -1,6 +1,8 @@
 const electron = require('electron')
+const Store = require('./store')
 // Module to control application life.
 const app = electron.app
+const ipcMain = electron.ipcMain;
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
 
@@ -11,16 +13,14 @@ const url = require('url')
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
-function createWindow () {
+let dataStore
+
+function createWindow() {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600})
+  mainWindow = new BrowserWindow({ width: 800, height: 600 })
 
   // and load the index.html of the app.
-  mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
-    protocol: 'file:',
-    slashes: true
-  }))
+  mainWindow.loadURL("http://localhost:5000/ServiceDesk/#")
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
@@ -32,6 +32,21 @@ function createWindow () {
     // when you should delete the corresponding element.
     mainWindow = null
   })
+
+  dataStore = new Store({
+    // We'll call our data file 'user-preferences'
+    configName: 'test-data',
+    defaults: {}
+  });
+
+  ipcMain.on('store-data', (event, arg) => {
+    dataStore.set(arg.key, arg.value);
+  });
+
+  ipcMain.on('retrieve-data', (event, arg) => {
+    let data = dataStore.get(arg.key);
+    event.returnValue = data;
+  });
 }
 
 // This method will be called when Electron has finished
